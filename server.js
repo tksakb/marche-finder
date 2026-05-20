@@ -78,8 +78,11 @@ const MIME = {
 const SEARCH_TIMEOUT_MS = 30000;
 const SEARCH_PAGE_TIMEOUT_MS = 5000;
 const CANDIDATE_PAGE_TIMEOUT_MS = 3500;
+const CACHE_TTL_MS = Number(process.env.SEARCH_CACHE_TTL_MS || 60 * 60 * 1000);
 
 let lastSuccessfulPayload = null;
+let cachedSearchPayload = null;
+let cachedSearchAt = 0;
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -110,6 +113,12 @@ server.on("error", (error) => {
 
 async function handleSearch(res) {
   const startedAt = new Date();
+
+  if (isSearchCacheFresh()) {
+    sendJson(res, 200, buildCachedSearchPayload(startedAt));
+    return;
+  }
+
   const timeoutPayload = new Promise((resolve) => {
     setTimeout(() => {
       resolve(buildFallbackPayload(startedAt, "讀懃ｴ｢縺ｫ譎る俣縺後°縺九▲縺溘◆繧√\�\比ｸｭ縺ｧ謇薙■蛻�ｊ縺ｾ縺励◆縲ゅｂ縺�ｸ\蠎ｦ縺願ｩｦ縺励￥縺 縺輔＞縲�"));
@@ -181,6 +190,8 @@ async function collectResults(startedAt) {
 
   if (payload.count > 0) {
     lastSuccessfulPayload = payload;
+    cachedSearchPayload = payload;
+    cachedSearchAt = Date.now();
     return payload;
   }
 
@@ -194,6 +205,21 @@ async function collectResults(startedAt) {
   }
 
   return payload;
+}
+
+function isSearchCacheFresh() {
+  return Boolean(cachedSearchPayload && Date.now() - cachedSearchAt < CACHE_TTL_MS);
+}
+
+function buildCachedSearchPayload(now) {
+  const remainingMs = Math.max(0, CACHE_TTL_MS - (Date.now() - cachedSearchAt));
+  return {
+    ...cachedSearchPayload,
+    generatedAt: now.toISOString(),
+    cached: true,
+    cacheExpiresAt: new Date(Date.now() + remainingMs).toISOString(),
+    warning: `API蛻ｩ逕ｨ蝗樊焚繧堤ｯ\邏�☆繧九◆繧√\�${Math.ceil(remainingMs / 60000)}蛻�燕蠕後�蜑榊屓縺ｮ讀懃ｴ｢邨先棡繧定｡ｨ遉ｺ縺励∪縺吶\Ａ
+  };
 }
 
 function fallbackEntries() {
