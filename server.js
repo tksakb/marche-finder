@@ -332,8 +332,9 @@ async function fetchText(url, timeoutMs) {
 
 async function serveStatic(pathname, res) {
   const safePath = pathname === "/" ? "/index.html" : pathname;
-  const filePath = path.normalize(path.join(PUBLIC, safePath));
-  if (!filePath.startsWith(PUBLIC)) {
+  const publicRoot = await resolvePublicRoot();
+  const filePath = path.normalize(path.join(publicRoot, safePath));
+  if (!filePath.startsWith(publicRoot)) {
     sendText(res, 403, "Forbidden");
     return;
   }
@@ -345,6 +346,15 @@ async function serveStatic(pathname, res) {
     res.end(data);
   } catch {
     sendText(res, 404, "Not found");
+  }
+}
+
+async function resolvePublicRoot() {
+  try {
+    await fs.access(path.join(PUBLIC, "index.html"));
+    return PUBLIC;
+  } catch {
+    return ROOT;
   }
 }
 
