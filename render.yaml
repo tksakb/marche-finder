@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: marche-finder
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RENDER
+        value: "true"

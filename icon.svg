@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="マルシェ検索">
+  <rect width="512" height="512" rx="96" fill="#176b7a"/>
+  <path d="M106 214h300v190H106z" fill="#fff8ec"/>
+  <path d="M128 154h256l36 76H92z" fill="#f5c05a"/>
+  <path d="M128 154h64l-22 76H92zM256 154h64l22 76h-86z" fill="#e96e4c"/>
+  <path d="M178 286h156v34H178zM178 348h110v34H178z" fill="#176b7a"/>
+  <circle cx="354" cy="350" r="34" fill="#1d7d53"/>
+  <path d="m378 374 36 36" stroke="#fff8ec" stroke-width="22" stroke-linecap="round"/>
+</svg>
