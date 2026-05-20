@@ -207,6 +207,10 @@ function fallbackEntries() {
 }
 
 async function searchDuckDuckGo(query, limit = 5) {
+  if (process.env.SERPAPI_KEY) {
+    return searchSerpApi(query, limit);
+  }
+
   const url = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
   const html = await fetchText(url, SEARCH_PAGE_TIMEOUT_MS);
   if (!html) return [];
@@ -218,6 +222,34 @@ async function searchDuckDuckGo(query, limit = 5) {
     const resolved = normalizeDuckDuckGoUrl(href);
     return resolved && title ? { title, url: resolved } : null;
   }).filter(Boolean);
+}
+
+async function searchSerpApi(query, limit = 5) {
+  const url = new URL("https://serpapi.com/search");
+  url.searchParams.set("engine", "google");
+  url.searchParams.set("q", query);
+  url.searchParams.set("api_key", process.env.SERPAPI_KEY);
+  url.searchParams.set("num", String(Math.min(Math.max(limit, 1), 10)));
+  url.searchParams.set("hl", "ja");
+  url.searchParams.set("gl", "jp");
+  url.searchParams.set("location", "Tokyo, Japan");
+
+  try {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(SEARCH_PAGE_TIMEOUT_MS),
+      headers: {
+        "accept": "application/json"
+      }
+    });
+    if (!response.ok) return [];
+
+    const payload = await response.json();
+    return (payload.organic_results || []).slice(0, limit).map((item) => {
+      return item.link && item.title ? { title: item.title, url: item.link } : null;
+    }).filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 async function enrichCandidate(result, prefecture, now = new Date(), source = "web") {
